@@ -132,7 +132,11 @@ def play_level(level, reset_health=True):
     while time.time() - start_time < memorization_time:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                return "quit"
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if show_quit_confirmation(screen):
+                        return "quit"
         
         remaining_time = memorization_time - int(time.time() - start_time)
         
@@ -160,31 +164,26 @@ def play_level(level, reset_health=True):
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                return "quit"
             elif event.type == pygame.KEYDOWN:
-                valid_move, wall_break = False, False
-                if event.key == pygame.K_w:
-                    valid_move, wall_break = move_player(player_pos, 'w', maze, size)
-                elif event.key == pygame.K_s:
-                    valid_move, wall_break = move_player(player_pos, 's', maze, size)
-                elif event.key == pygame.K_a:
-                    valid_move, wall_break = move_player(player_pos, 'a', maze, size)
-                elif event.key == pygame.K_d:
-                    valid_move, wall_break = move_player(player_pos, 'd', maze, size)
-                
-                if not valid_move:
-                    health -= 1
-                    wall_break_warning = "Ouch! You hit a wall!" if wall_break else ""
-                else:
-                    wall_break_warning = ""
-                
-                if check_win(player_pos, treasure_pos):
-                    show_win_screen(screen, level)
-                    return True
-                
-                if health <= 0:
-                    show_game_over_screen(screen)
-                    return False
+                if event.key == pygame.K_ESCAPE:
+                    if show_quit_confirmation(screen):
+                        return "quit"
+                elif event.key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]:
+                    valid_move, wall_break = move_player(player_pos, pygame.key.name(event.key), maze, size)
+                    if not valid_move:
+                        health -= 1
+                        wall_break_warning = "Ouch! You hit a wall!" if wall_break else ""
+                    else:
+                        wall_break_warning = ""
+                    
+                    if check_win(player_pos, treasure_pos):
+                        show_win_screen(screen, level)
+                        return True
+                    
+                    if health <= 0:
+                        show_game_over_screen(screen)
+                        return False
         
         if remaining_time <= 0:
             show_time_up_screen(screen)
@@ -252,22 +251,39 @@ def show_time_up_screen(screen):
     screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, screen.get_height() // 2))
     pygame.display.flip()
     pygame.time.wait(3000)
+    
+def show_quit_confirmation(screen):
+    screen.fill(COLORS['background'])
+    text1 = FONT_LARGE.render("Are you sure you want to quit?", True, COLORS['text'])
+    text2 = FONT_MEDIUM.render("Press 'Y' to quit or 'N' to continue", True, COLORS['text'])
+    screen.blit(text1, (screen.get_width() // 2 - text1.get_width() // 2, screen.get_height() // 2 - 50))
+    screen.blit(text2, (screen.get_width() // 2 - text2.get_width() // 2, screen.get_height() // 2 + 10))
+    pygame.display.flip()
+    
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_y:
+                    return True
+                elif event.key == pygame.K_n:
+                    return False
+    return False
 
 def main():
     pygame.init()
     level = 1
     running = True
     while running and level <= LEVELS:
-        if play_level(level, reset_health=(level == 1)):
+        result = play_level(level, reset_health=(level == 1))
+        if result == "quit":
+            running = False
+        elif result:
             level += 1
         else:
             print("Back to Level 1...")
             level = 1
             time.sleep(2)
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
     
     pygame.quit()
 
