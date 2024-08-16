@@ -3,16 +3,33 @@ import pygame
 import os
 import random
 
-# Ukuran maze
+# Game settings
 BASE_WIDTH = 7
 BASE_HEIGHT = 7
-TILE_SIZE = 50
-FPS = 15
+TILE_SIZE = 60
+FPS = 30
 INITIAL_HEALTH = 5
 TIMER_LIMIT = 30
-LEVELS = 5
+LEVELS = 3
 
-# Mengatur posisi harta karun dan pemain
+# Colors
+COLORS = {
+    'background': (15, 15, 30),
+    'path': (70, 70, 100),
+    'wall': (40, 40, 60),
+    'player': (0, 200, 255),
+    'treasure': (255, 215, 0),
+    'health': (255, 50, 50),
+    'timer': (50, 255, 50),
+    'text': (200, 200, 200)
+}
+
+# Initialize Pygame fonts
+pygame.font.init()
+FONT_SMALL = pygame.font.Font(None, 24)
+FONT_MEDIUM = pygame.font.Font(None, 32)
+FONT_LARGE = pygame.font.Font(None, 48)
+
 def initialize_game(level):
     size = BASE_WIDTH + level * 2
     player_pos = [0, 0]
@@ -20,7 +37,6 @@ def initialize_game(level):
     health = INITIAL_HEALTH
     return player_pos, treasure_pos, health, size
 
-# Membuat maze acak
 def generate_maze(size):
     maze = [[1] * size for _ in range(size)]
     stack = [(0, 0)]
@@ -46,141 +62,150 @@ def generate_maze(size):
     
     return maze
 
-# Menampilkan labirin di terminal
-def display_maze(maze):
-    print("Labirin (0 = jalan, 1 = dinding):")
-    for row in maze:
-        print(' '.join(map(str, row)))
-    print()
-
-# Menampilkan labirin dengan pygame
-def display_maze_pygame(size, show_walls=True):
-    pygame.init()
-    screen = pygame.display.set_mode((size * TILE_SIZE, size * TILE_SIZE))
-    pygame.display.set_caption("Invisible Maze")
+def display_maze_pygame(size):
+    screen_width = size * TILE_SIZE + 200  # Extra space for UI elements
+    screen_height = size * TILE_SIZE + 100  # Extra space for UI elements
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption("Invisible Maze Adventure")
     clock = pygame.time.Clock()
-    
-    colors = {
-        'path': (200, 200, 200),
-        'wall': (50, 50, 50),
-        'player': (0, 128, 255),
-        'treasure': (255, 223, 0),
-        'health': (255, 0, 0),
-        'background': (0, 0, 0),
-        'timer': (0, 255, 0)
-    }
     
     def draw_maze(maze, show_walls=True):
         for y in range(size):
-             for x in range(size):
+            for x in range(size):
+                rect = pygame.Rect(x * TILE_SIZE + 50, y * TILE_SIZE + 50, TILE_SIZE, TILE_SIZE)
                 if maze[y][x] == 1 and show_walls:
-                    color = colors['wall']
+                    pygame.draw.rect(screen, COLORS['wall'], rect)
                 else:
-                    color = colors['path']
-                pygame.draw.rect(screen, color, pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-                pygame.draw.rect(screen, colors['path'], pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE), 1)  # Grid overlay
+                    pygame.draw.rect(screen, COLORS['path'], rect)
+                pygame.draw.rect(screen, COLORS['background'], rect, 1)  # Grid lines
     
     def draw_objects(player_pos, treasure_pos):
-        pygame.draw.rect(screen, colors['player'], pygame.Rect(player_pos[0] * TILE_SIZE, player_pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-        pygame.draw.rect(screen, colors['treasure'], pygame.Rect(treasure_pos[0] * TILE_SIZE, treasure_pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+        player_rect = pygame.Rect(player_pos[0] * TILE_SIZE + 50, player_pos[1] * TILE_SIZE + 50, TILE_SIZE, TILE_SIZE)
+        treasure_rect = pygame.Rect(treasure_pos[0] * TILE_SIZE + 50, treasure_pos[1] * TILE_SIZE + 50, TILE_SIZE, TILE_SIZE)
+        
+        pygame.draw.rect(screen, COLORS['player'], player_rect)
+        pygame.draw.rect(screen, COLORS['treasure'], treasure_rect)
+        
+        # Add some visual flair
+        pygame.draw.circle(screen, COLORS['background'], player_rect.center, TILE_SIZE // 4)
+        pygame.draw.rect(screen, COLORS['background'], treasure_rect.inflate(-20, -20))
     
     def draw_health(health):
-        font = pygame.font.Font(None, 36)
-        text = font.render(f'Health: {health}', True, colors['health'])
-        screen.blit(text, (10, 10))
-        pygame.draw.rect(screen, colors['health'], pygame.Rect(10, 50, 100, 20), 1)  # Health bar border
-        pygame.draw.rect(screen, colors['health'], pygame.Rect(10, 50, 100 * (health / INITIAL_HEALTH), 20))  # Health bar fill
+        text = FONT_MEDIUM.render(f'Health: {health}', True, COLORS['health'])
+        screen.blit(text, (screen_width - 180, 60))
+        
+        health_bar_rect = pygame.Rect(screen_width - 180, 100, 150, 20)
+        pygame.draw.rect(screen, COLORS['health'], health_bar_rect, 2)
+        health_fill_rect = health_bar_rect.copy()
+        health_fill_rect.width = health_fill_rect.width * (health / INITIAL_HEALTH)
+        pygame.draw.rect(screen, COLORS['health'], health_fill_rect)
     
     def draw_timer(remaining_time):
-        font = pygame.font.Font(None, 36)
-        text = font.render(f'Time: {remaining_time}', True, colors['timer'])
-        screen.blit(text, (size * TILE_SIZE - 120, 10))
+        text = FONT_MEDIUM.render(f'Time: {remaining_time}', True, COLORS['timer'])
+        screen.blit(text, (screen_width - 180, 140))
+        
+        timer_bar_rect = pygame.Rect(screen_width - 180, 180, 150, 20)
+        pygame.draw.rect(screen, COLORS['timer'], timer_bar_rect, 2)
+        timer_fill_rect = timer_bar_rect.copy()
+        timer_fill_rect.width = timer_fill_rect.width * (remaining_time / TIMER_LIMIT)
+        pygame.draw.rect(screen, COLORS['timer'], timer_fill_rect)
     
-    return screen, draw_maze, draw_objects, draw_health, draw_timer, clock
+    def draw_level(level):
+        text = FONT_LARGE.render(f'Level {level}', True, COLORS['text'])
+        screen.blit(text, (screen_width // 2 - text.get_width() // 2, 10))
+    
+    return screen, draw_maze, draw_objects, draw_health, draw_timer, draw_level, clock
 
 def play_level(level, reset_health=True):
     player_pos, treasure_pos, health, size = initialize_game(level)
     maze = generate_maze(size)
     
-    # Menampilkan labirin untuk diingat
-    print(f"Level {level} - Selamat datang di Invisible Maze!")
-    print("Anda memiliki 30 detik untuk mengingat labirin sebelum dimulai.")
-    display_maze(maze)
-    time.sleep(30)
-    
-    os.system('cls' if os.name == 'nt' else 'clear')  # Clear terminal
-    print("Waktu untuk mengingat labirin telah habis. Labirin tidak terlihat sekarang.")
-    print("Gunakan WASD untuk bergerak: W=Atas, S=Bawah, A=Kiri, D=Kanan")
-    
-    screen, draw_maze, draw_objects, draw_health, draw_timer, clock = display_maze_pygame(size, show_walls=False)
+    screen, draw_maze, draw_objects, draw_health, draw_timer, draw_level, clock = display_maze_pygame(size)
     
     if not reset_health:
-        health = INITIAL_HEALTH  # Reset health if starting over due to Game Over
+        health = INITIAL_HEALTH
     
+    # Memorization phase
     start_time = time.time()
-    running = True
-    while running:
-        elapsed_time = time.time() - start_time
-        remaining_time = TIMER_LIMIT - int(elapsed_time)
-        
+    memorization_time = 30
+    
+    while time.time() - start_time < memorization_time:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False  # Quit the game
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w:
-                    if not move_player(player_pos, 'w', maze, size):
-                        health -= 1
-                elif event.key == pygame.K_s:
-                    if not move_player(player_pos, 's', maze, size):
-                        health -= 1
-                elif event.key == pygame.K_a:
-                    if not move_player(player_pos, 'a', maze, size):
-                        health -= 1
-                elif event.key == pygame.K_d:
-                    if not move_player(player_pos, 'd', maze, size):
-                        health -= 1
-                
-                if check_win(player_pos, treasure_pos):
-                    print(f"Selamat! Kamu telah menyelesaikan Level {level}!")
-                    return True
-                
-                if health <= 0:
-                    print("Game Over!")
-                    return False
+                return False
         
-        if remaining_time <= 0:
-            print("Waktu habis!")
-            return False
+        remaining_time = memorization_time - int(time.time() - start_time)
         
-        screen.fill((0, 0, 0))
-        draw_maze(maze)
+        screen.fill(COLORS['background'])
+        draw_maze(maze, show_walls=True)
         draw_objects(player_pos, treasure_pos)
         draw_health(health)
         draw_timer(remaining_time)
+        draw_level(level)
+        
+        text = FONT_MEDIUM.render(f"Memorize the maze! {remaining_time} seconds left", True, COLORS['text'])
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, screen.get_height() - 40))
+        
         pygame.display.flip()
         clock.tick(FPS)
     
-    pygame.quit()
+    # Gameplay phase
+    game_start_time = time.time()
+    running = True
+    wall_break_warning = ""
+    
+    while running:
+        elapsed_time = time.time() - game_start_time
+        remaining_time = max(0, TIMER_LIMIT - int(elapsed_time))
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                valid_move, wall_break = False, False
+                if event.key == pygame.K_w:
+                    valid_move, wall_break = move_player(player_pos, 'w', maze, size)
+                elif event.key == pygame.K_s:
+                    valid_move, wall_break = move_player(player_pos, 's', maze, size)
+                elif event.key == pygame.K_a:
+                    valid_move, wall_break = move_player(player_pos, 'a', maze, size)
+                elif event.key == pygame.K_d:
+                    valid_move, wall_break = move_player(player_pos, 'd', maze, size)
+                
+                if not valid_move:
+                    health -= 1
+                    wall_break_warning = "Ouch! You hit a wall!" if wall_break else ""
+                else:
+                    wall_break_warning = ""
+                
+                if check_win(player_pos, treasure_pos):
+                    show_win_screen(screen, level)
+                    return True
+                
+                if health <= 0:
+                    show_game_over_screen(screen)
+                    return False
+        
+        if remaining_time <= 0:
+            show_time_up_screen(screen)
+            return False
+        
+        screen.fill(COLORS['background'])
+        draw_maze(maze, show_walls=False)
+        draw_objects(player_pos, treasure_pos)
+        draw_health(health)
+        draw_timer(remaining_time)
+        draw_level(level)
+        
+        if wall_break_warning:
+            text = FONT_MEDIUM.render(wall_break_warning, True, COLORS['health'])
+            screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, screen.get_height() - 40))
+        
+        pygame.display.flip()
+        clock.tick(FPS)
+    
     return False
 
-# Menampilkan status permainan
-def print_status(player_pos, treasure_pos, health, remaining_time):
-    os.system('cls' if os.name == 'nt' else 'clear')  # Clear terminal
-    print(f"Pemain berada di posisi: {player_pos}")
-    print(f"Harta karun berada di posisi: {treasure_pos}")
-    print(f"Kesehatan pemain: {health}")
-    print(f"Waktu tersisa: {remaining_time}")
-
-# Mengecek apakah posisi pemain sama dengan posisi harta karun
-def check_win(player_pos, treasure_pos):
-    return player_pos == treasure_pos
-
-# Mengecek apakah posisi tujuan tidak menabrak dinding
-def is_valid_move(new_pos, maze, size):
-    x, y = new_pos
-    return 0 <= x < size and 0 <= y < size and maze[y][x] == 0
-
-# Menggerakkan pemain
 def move_player(player_pos, direction, maze, size):
     new_pos = player_pos.copy()
     if direction == 'w':
@@ -198,122 +223,53 @@ def move_player(player_pos, direction, maze, size):
     else:
         return False, True  # Move was invalid (hit a wall)
 
-def play_level(level, reset_health=True):
-    player_pos, treasure_pos, health, size = initialize_game(level)
-    maze = generate_maze(size)
-    
-    screen, draw_maze, draw_objects, draw_health, draw_timer, clock = display_maze_pygame(size, show_walls=True)
-    
-    if not reset_health:
-        health = INITIAL_HEALTH  # Reset health if starting over due to Game Over
-    
-    # Menampilkan labirin untuk diingat selama 30 detik
-    print(f"Level {level} - Selamat datang di Invisible Maze!")
-    print("Anda memiliki 30 detik untuk mengingat labirin sebelum dimulai.")
-    
-    start_time = time.time()
-    memorization_time = 30
-    
-    while time.time() - start_time < memorization_time:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return False
-        
-        remaining_time = memorization_time - int(time.time() - start_time)
-        
-        screen.fill((0, 0, 0))
-        draw_maze(maze)
-        draw_objects(player_pos, treasure_pos)
-        draw_health(health)
-        draw_timer(remaining_time)
-        
-        font = pygame.font.Font(None, 36)
-        text = font.render(f"Memorize the maze! {remaining_time} seconds left", True, (255, 255, 255))
-        screen.blit(text, (size * TILE_SIZE // 2 - text.get_width() // 2, size * TILE_SIZE - 50))
-        
-        pygame.display.flip()
-        clock.tick(FPS)
-    
-    print("Waktu untuk mengingat labirin telah habis. Labirin tidak terlihat sekarang.")
-    print("Gunakan WASD untuk bergerak: W=Atas, S=Bawah, A=Kiri, D=Kanan")
-    
-    # Ubah maze menjadi tidak terlihat
-    show_walls = False
-    
-    game_start_time = time.time()
-    running = True
-    wall_break_warning = ""
-    while running:
-        elapsed_time = time.time() - game_start_time
-        remaining_time = TIMER_LIMIT - int(elapsed_time)
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return False
-            elif event.type == pygame.KEYDOWN:
-                valid_move = False
-                wall_break = False
-                if event.key == pygame.K_w:
-                    valid_move, wall_break = move_player(player_pos, 'w', maze, size)
-                elif event.key == pygame.K_s:
-                    valid_move, wall_break = move_player(player_pos, 's', maze, size)
-                elif event.key == pygame.K_a:
-                    valid_move, wall_break = move_player(player_pos, 'a', maze, size)
-                elif event.key == pygame.K_d:
-                    valid_move, wall_break = move_player(player_pos, 'd', maze, size)
-                
-                if not valid_move:
-                    health -= 1
-                    if wall_break:
-                        wall_break_warning = "Warning: You hit a wall!"
-                else:
-                    wall_break_warning = ""
-                
-                if check_win(player_pos, treasure_pos):
-                    print(f"Selamat! Kamu telah menyelesaikan Level {level}!")
-                    pygame.quit()
-                    return True
-                
-                if health <= 0:
-                    print("Game Over!")
-                    pygame.quit()
-                    return False
-        
-        if remaining_time <= 0:
-            print("Waktu habis!")
-            pygame.quit()
-            return False
-        
-        screen.fill((0, 0, 0))
-        draw_maze(maze, show_walls)
-        draw_objects(player_pos, treasure_pos)
-        draw_health(health)
-        draw_timer(remaining_time)
-        
-        # Display wall break warning
-        if wall_break_warning:
-            font = pygame.font.Font(None, 36)
-            text = font.render(wall_break_warning, True, (255, 0, 0))
-            screen.blit(text, (size * TILE_SIZE // 2 - text.get_width() // 2, 10))
-        
-        pygame.display.flip()
-        clock.tick(FPS)
-    
-    pygame.quit()
-    return False
+def is_valid_move(new_pos, maze, size):
+    x, y = new_pos
+    return 0 <= x < size and 0 <= y < size and maze[y][x] == 0
+
+def check_win(player_pos, treasure_pos):
+    return player_pos == treasure_pos
+
+def show_win_screen(screen, level):
+    screen.fill(COLORS['background'])
+    text1 = FONT_LARGE.render(f"Congratulations!", True, COLORS['text'])
+    text2 = FONT_MEDIUM.render(f"You completed Level {level}", True, COLORS['text'])
+    screen.blit(text1, (screen.get_width() // 2 - text1.get_width() // 2, screen.get_height() // 2 - 50))
+    screen.blit(text2, (screen.get_width() // 2 - text2.get_width() // 2, screen.get_height() // 2 + 10))
+    pygame.display.flip()
+    pygame.time.wait(3000)
+
+def show_game_over_screen(screen):
+    screen.fill(COLORS['background'])
+    text = FONT_LARGE.render("Game Over!", True, COLORS['health'])
+    screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, screen.get_height() // 2))
+    pygame.display.flip()
+    pygame.time.wait(3000)
+
+def show_time_up_screen(screen):
+    screen.fill(COLORS['background'])
+    text = FONT_LARGE.render("Time's Up!", True, COLORS['timer'])
+    screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, screen.get_height() // 2))
+    pygame.display.flip()
+    pygame.time.wait(3000)
 
 def main():
+    pygame.init()
     level = 1
-    while level <= LEVELS:
-        # Pass reset_health=True for levels after 1, so health resets only on Level 1
+    running = True
+    while running and level <= LEVELS:
         if play_level(level, reset_health=(level == 1)):
             level += 1
         else:
-            print("Kembali ke Level 1...")
+            print("Back to Level 1...")
             level = 1
-            time.sleep(5)
+            time.sleep(2)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+    
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
