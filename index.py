@@ -1,6 +1,11 @@
 import time
 import pygame
 import random
+import pygame.mixer
+
+# Initialize the mixer
+pygame.mixer.init()
+
 
 # Game settings
 BASE_WIDTH = 5
@@ -10,6 +15,14 @@ FPS = 30
 INITIAL_HEALTH = 5
 TIMER_LIMIT = 30
 LEVELS = 3
+
+# Load sound effects
+hit_wall_sound = pygame.mixer.Sound('./sound/hit_wall.mp3')
+treasure_sound = pygame.mixer.Sound('./sound/treasure.mp3')
+win_sound = pygame.mixer.Sound('./sound/win.mp3')
+game_over_sound = pygame.mixer.Sound('./sound/game_over.mp3')
+time_up_sound = pygame.mixer.Sound('./sound/time_up.mp3')
+
 
 # Colors
 COLORS = {
@@ -220,6 +233,7 @@ def move_player(player_pos, direction, maze, size):
         player_pos[:] = new_pos
         return True, False  # Move was valid, no wall break
     else:
+        hit_wall_sound.play()  # Play sound when hitting a wall
         return False, True  # Move was invalid (hit a wall)
 
 def is_valid_move(new_pos, maze, size):
@@ -227,9 +241,13 @@ def is_valid_move(new_pos, maze, size):
     return 0 <= x < size and 0 <= y < size and maze[y][x] == 0
 
 def check_win(player_pos, treasure_pos):
-    return player_pos == treasure_pos
+    if player_pos == treasure_pos:
+        treasure_sound.play()  # Play sound when treasure is found
+        return True
+    return False
 
 def show_win_screen(screen, level):
+    win_sound.play()
     screen.fill(COLORS['background'])
     text1 = FONT_LARGE.render(f"Congratulations!", True, COLORS['text'])
     text2 = FONT_MEDIUM.render(f"You completed Level {level}", True, COLORS['text'])
@@ -239,6 +257,7 @@ def show_win_screen(screen, level):
     pygame.time.wait(3000)
 
 def show_game_over_screen(screen):
+    game_over_sound.play()  # Play sound when the game is over
     screen.fill(COLORS['background'])
     text = FONT_LARGE.render("Game Over!", True, COLORS['health'])
     screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, screen.get_height() // 2))
