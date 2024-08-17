@@ -1,11 +1,10 @@
 import time
 import pygame
-import os
 import random
 
 # Game settings
-BASE_WIDTH = 7
-BASE_HEIGHT = 7
+BASE_WIDTH = 5
+BASE_HEIGHT = 5
 TILE_SIZE = 60
 FPS = 30
 INITIAL_HEALTH = 5
@@ -90,11 +89,12 @@ def display_maze_pygame(size):
         pygame.draw.circle(screen, COLORS['background'], player_rect.center, TILE_SIZE // 4)
         pygame.draw.rect(screen, COLORS['background'], treasure_rect.inflate(-20, -20))
     
+    # Healt bar
     def draw_health(health):
         text = FONT_MEDIUM.render(f'Health: {health}', True, COLORS['health'])
-        screen.blit(text, (screen_width - 180, 60))
+        screen.blit(text, (screen_width - 160, 60))
         
-        health_bar_rect = pygame.Rect(screen_width - 180, 100, 150, 20)
+        health_bar_rect = pygame.Rect(screen_width - 160, 100, 150, 20)
         pygame.draw.rect(screen, COLORS['health'], health_bar_rect, 2)
         health_fill_rect = health_bar_rect.copy()
         health_fill_rect.width = health_fill_rect.width * (health / INITIAL_HEALTH)
@@ -102,9 +102,9 @@ def display_maze_pygame(size):
     
     def draw_timer(remaining_time):
         text = FONT_MEDIUM.render(f'Time: {remaining_time}', True, COLORS['timer'])
-        screen.blit(text, (screen_width - 180, 140))
+        screen.blit(text, (screen_width - 160, 140))
         
-        timer_bar_rect = pygame.Rect(screen_width - 180, 180, 150, 20)
+        timer_bar_rect = pygame.Rect(screen_width - 160, 180, 150, 20)
         pygame.draw.rect(screen, COLORS['timer'], timer_bar_rect, 2)
         timer_fill_rect = timer_bar_rect.copy()
         timer_fill_rect.width = timer_fill_rect.width * (remaining_time / TIMER_LIMIT)
