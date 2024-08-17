@@ -2,16 +2,23 @@
 
 Invisible Maze Adventure is a challenging puzzle game where players must navigate through an invisible maze to find hidden treasure. Test your memory and spatial skills in this thrilling adventure!
 
-## Feature
+## Features
 
-- Randomly generated mazes for each level
-- Memorization phase to remember the layout of the maze
-- Challenging gameplay with invisible maze
-- Health system and timer to increase the challenge
-- Three levels with increasing difficulty
-- Intuitive user interface with visual feedback
+- **Randomly Generated Mazes for Each Level:** Every level presents a new maze generated randomly, ensuring a fresh challenge every time.
+  
+- **Memorization Phase:** Players have 30 seconds to memorize the maze layout before the walls disappear, adding an extra layer of challenge.
 
-## Condition
+- **Challenging Invisible Maze Gameplay:** After the memorization phase, the maze walls become invisible, and players must navigate based on their memory.
+
+- **Health System and Timer:** Players start with a limited amount of health and must reach the treasure before time runs out. Every collision with a wall reduces health.
+
+- **Three Levels with Increasing Difficulty:** The game features three levels that increase in complexity and size as players progress.
+
+- **Intuitive User Interface with Visual Feedback:** The game interface provides clear indicators for health, time, and level progression.
+
+- **Sound Effects (SFX):** Immersive sound effects enhance the gameplay experience by providing audio cues for events like wall collisions, treasure collection, and level completion.
+
+## Requirements
 
 To run Invisible Maze Adventure, you need:
 
@@ -20,8 +27,11 @@ To run Invisible Maze Adventure, you need:
 
 ## Installation
 
-1. Make sure Python 3.x is installed on your system.
+1. Ensure Python 3.x is installed on your system.
 2. Install Pygame by running the following command:
+```bash
+   pip install pygame
+```
 3. Download or clone this repository to your computer.
 
 ## How to Play
@@ -31,23 +41,23 @@ To run Invisible Maze Adventure, you need:
 3. Run the game with the command:
 4. Follow the on-screen instructions to play:
 - Use the first 30 seconds to memorize the maze layout.
-- After that, navigate your character (blue box) to the treasure (gold box) using WASD keys.
+- After that, navigate your character (blue box) to the treasure (gold box) using the WASD keys.
 - Avoid hitting walls to maintain your health.
 - Complete the levels before time runs out!
 
-## Control
+## Controls
 
-- W: Move up
-- A: Move left
-- S: Move down
-- D: Move right
-- ESC: Exit the game (with confirmation)
+- **W:** Move up
+- **A:** Move left
+- **S:** Move down
+- **D:** Move right
+- **ESC:** Exit the game (with confirmation)
 
 ## Playing Tips
 
-- Try to create a mental map of the maze during the memorization phase.
+- Create a mental map of the maze during the memorization phase.
 - Move slowly and carefully to avoid hitting walls.
-- If you lose your way, try to return to the starting point and start again.
+- If you lose your way, try returning to the starting point and beginning again.
 
 ## Development
 
