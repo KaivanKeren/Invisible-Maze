@@ -6,7 +6,6 @@ import pygame.mixer
 # Initialize the mixer
 pygame.mixer.init()
 
-
 # Game settings
 BASE_WIDTH = 5
 BASE_HEIGHT = 5
@@ -22,6 +21,7 @@ treasure_sound = pygame.mixer.Sound('./sound/treasure.mp3')
 win_sound = pygame.mixer.Sound('./sound/win.mp3')
 game_over_sound = pygame.mixer.Sound('./sound/game_over.mp3')
 time_up_sound = pygame.mixer.Sound('./sound/time_up.mp3')
+backsouund = pygame.mixer.Sound('./sound/backsound.mp3')
 
 
 # Colors
@@ -291,6 +291,8 @@ def show_quit_confirmation(screen):
 
 def main():
     pygame.init()
+    backsouund.play()
+    backsouund.set_volume(0.7)
     level = 1
     running = True
     while running and level <= LEVELS:
