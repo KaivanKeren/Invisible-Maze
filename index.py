@@ -77,7 +77,7 @@ def generate_maze(size):
 def display_maze_pygame(size):
     screen_width = size * TILE_SIZE + 200  # Extra space for UI elements
     screen_height = size * TILE_SIZE + 100  # Extra space for UI elements
-    screen = pygame.display.set_mode((screen_width, screen_height))
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     pygame.display.set_caption("Invisible Maze Adventure")
     clock = pygame.time.Clock()
     
@@ -105,9 +105,9 @@ def display_maze_pygame(size):
     # Healt bar
     def draw_health(health):
         text = FONT_MEDIUM.render(f'Health: {health}', True, COLORS['health'])
-        screen.blit(text, (screen_width - 160, 60))
+        screen.blit(text, (screen_width + 200, 60))
         
-        health_bar_rect = pygame.Rect(screen_width - 160, 100, 150, 20)
+        health_bar_rect = pygame.Rect(screen_width + 200, 100, 250, 20)
         pygame.draw.rect(screen, COLORS['health'], health_bar_rect, 2)
         health_fill_rect = health_bar_rect.copy()
         health_fill_rect.width = health_fill_rect.width * (health / INITIAL_HEALTH)
@@ -115,9 +115,9 @@ def display_maze_pygame(size):
     
     def draw_timer(remaining_time):
         text = FONT_MEDIUM.render(f'Time: {remaining_time}', True, COLORS['timer'])
-        screen.blit(text, (screen_width - 160, 140))
+        screen.blit(text, (screen_width + 200, 140))
         
-        timer_bar_rect = pygame.Rect(screen_width - 160, 180, 150, 20)
+        timer_bar_rect = pygame.Rect(screen_width + 200, 180, 250, 20)
         pygame.draw.rect(screen, COLORS['timer'], timer_bar_rect, 2)
         timer_fill_rect = timer_bar_rect.copy()
         timer_fill_rect.width = timer_fill_rect.width * (remaining_time / TIMER_LIMIT)
