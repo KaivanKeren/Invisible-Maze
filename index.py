@@ -7,6 +7,7 @@ import pygame.mixer
 pygame.mixer.init()
 
 # Game settings
+MASTER_VOLUME = 0.5
 BASE_WIDTH = 5
 BASE_HEIGHT = 5
 TILE_SIZE = 60
@@ -21,7 +22,7 @@ treasure_sound = pygame.mixer.Sound('./sound/treasure.mp3')
 win_sound = pygame.mixer.Sound('./sound/win.mp3')
 game_over_sound = pygame.mixer.Sound('./sound/game_over.mp3')
 time_up_sound = pygame.mixer.Sound('./sound/time_up.mp3')
-backsouund = pygame.mixer.Sound('./sound/backsound.mp3')
+backsound = pygame.mixer.Sound('./sound/backsound.mp3')
 
 
 # Colors
@@ -33,7 +34,9 @@ COLORS = {
     'treasure': (255, 215, 0),
     'health': (255, 50, 50),
     'timer': (50, 255, 50),
-    'text': (200, 200, 200)
+    'text': (200, 200, 200),
+    'menu_highlight': (255, 255, 255),
+    'menu_normal': (150, 150, 150)
 }
 
 # Initialize Pygame fonts
@@ -148,8 +151,12 @@ def play_level(level, reset_health=True):
                 return "quit"
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    if show_quit_confirmation(screen):
+                    # Improved pause menu
+                    pause_result = show_pause_menu(screen, level)
+                    if pause_result == "quit":
                         return "quit"
+                    elif pause_result == "restart":
+                        return False
         
         remaining_time = memorization_time - int(time.time() - start_time)
         
@@ -180,8 +187,12 @@ def play_level(level, reset_health=True):
                 return "quit"
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    if show_quit_confirmation(screen):
+                    # Improved pause menu
+                    pause_result = show_pause_menu(screen, level)
+                    if pause_result == "quit":
                         return "quit"
+                    elif pause_result == "restart":
+                        return False
                 elif event.key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]:
                     valid_move, wall_break = move_player(player_pos, pygame.key.name(event.key), maze, size)
                     if not valid_move:
@@ -271,28 +282,114 @@ def show_time_up_screen(screen):
     pygame.display.flip()
     pygame.time.wait(3000)
     
-def show_quit_confirmation(screen):
-    screen.fill(COLORS['background'])
-    text1 = FONT_LARGE.render("Are you sure you want to quit?", True, COLORS['text'])
-    text2 = FONT_MEDIUM.render("Press 'Y' to quit or 'N' to continue", True, COLORS['text'])
-    screen.blit(text1, (screen.get_width() // 2 - text1.get_width() // 2, screen.get_height() // 2 - 50))
-    screen.blit(text2, (screen.get_width() // 2 - text2.get_width() // 2, screen.get_height() // 2 + 10))
-    pygame.display.flip()
+def set_volume(volume):
+    """Set volume for all sound effects and background music"""
+    global MASTER_VOLUME
+    MASTER_VOLUME = max(0, min(1, volume))
+    hit_wall_sound.set_volume(MASTER_VOLUME)
+    treasure_sound.set_volume(MASTER_VOLUME)
+    win_sound.set_volume(MASTER_VOLUME)
+    game_over_sound.set_volume(MASTER_VOLUME)
+    time_up_sound.set_volume(MASTER_VOLUME)
+    backsound.set_volume(MASTER_VOLUME * 0.7)
     
-    waiting = True
-    while waiting:
+def show_pause_menu(screen, current_level):
+    """
+    Display an interactive pause menu with multiple options
+    
+    Menu options:
+    - Continue
+    - Restart Level
+    - Volume Control
+    - Quit Game
+    """
+    menu_options = [
+        "Continue",
+        "Restart Level",
+        "Volume",
+        "Quit Game"
+    ]
+    selected_option = 0
+    volume_slider = MASTER_VOLUME
+
+    while True:
+        screen.fill(COLORS['background'])
+        
+        # Title
+        title = FONT_LARGE.render("Pause Menu", True, COLORS['text'])
+        title_rect = title.get_rect(center=(screen.get_width() // 2, screen.get_height() // 4))
+        screen.blit(title, title_rect)
+
+        # Render menu options
+        for i, option in enumerate(menu_options):
+            color = COLORS['menu_highlight'] if i == selected_option else COLORS['menu_normal']
+            text = FONT_MEDIUM.render(option, True, color)
+            text_rect = text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2 + i * 50))
+            screen.blit(text, text_rect)
+
+        # Volume slider when Volume is selected
+        if menu_options[selected_option] == "Volume":
+            slider_rect = pygame.Rect(screen.get_width() // 2 - 150, screen.get_height() // 2 + 200, 300, 20)
+            pygame.draw.rect(screen, COLORS['menu_normal'], slider_rect)
+            
+            # Volume indicator
+            indicator_x = slider_rect.x + int(volume_slider * slider_rect.width)
+            indicator_rect = pygame.Rect(indicator_x - 10, slider_rect.y - 10, 20, 40)
+            pygame.draw.rect(screen, COLORS['menu_highlight'], indicator_rect)
+
+            # Volume percentage text
+            vol_text = FONT_SMALL.render(f"Volume: {int(volume_slider * 100)}%", True, COLORS['text'])
+            vol_text_rect = vol_text.get_rect(center=(screen.get_width() // 2, slider_rect.y - 30))
+            screen.blit(vol_text, vol_text_rect)
+
+        pygame.display.flip()
+
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "quit"
+            
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_y:
-                    return True
-                elif event.key == pygame.K_n:
-                    return False
-    return False
+                if event.key == pygame.K_ESCAPE:
+                    # Exit pause menu and continue game
+                    return None
+                
+                if event.key == pygame.K_UP:
+                    selected_option = (selected_option - 1) % len(menu_options)
+                
+                if event.key == pygame.K_DOWN:
+                    selected_option = (selected_option + 1) % len(menu_options)
+                
+                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                    # Handle menu selection
+                    if menu_options[selected_option] == "Continue":
+                        return None
+                    
+                    if menu_options[selected_option] == "Restart Level":
+                        return "restart"
+                    
+                    if menu_options[selected_option] == "Quit Game":
+                        return "quit"
+                
+                # Volume control when Volume option is selected
+                if menu_options[selected_option] == "Volume":
+                    if event.key == pygame.K_LEFT:
+                        volume_slider = max(0, volume_slider - 0.1)
+                        set_volume(volume_slider)
+                    
+                    if event.key == pygame.K_RIGHT:
+                        volume_slider = min(1, volume_slider + 0.1)
+                        set_volume(volume_slider)
+
+        # return None
 
 def main():
     pygame.init()
-    backsouund.play()
-    backsouund.set_volume(0.7)
+    # Initialize volume
+    set_volume(MASTER_VOLUME)
+    
+    # Start background music
+    backsound.play(-1)  # -1 means loop indefinitely
+    
     level = 1
     running = True
     while running and level <= LEVELS:
@@ -307,6 +404,7 @@ def main():
             time.sleep(2)
     
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
